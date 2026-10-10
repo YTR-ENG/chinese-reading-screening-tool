@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中文阅读困难风险筛查辅助工具 v2</title>
+<style>
+    *{box-sizing:border-box;font-family:"Microsoft YaHei","PingFang SC",sans-serif;}
+    body{margin:0;padding:24px 12px 48px;background:#eef2f7;color:#1f2937;-webkit-text-size-adjust:100%;}
+    .wrap{max-width:760px;margin:0 auto;}
+    .card{background:#fff;border-radius:16px;padding:28px;box-shadow:0 6px 24px rgba(15,23,42,.08);}
+    .hide{display:none;}
+    h2{margin:0 0 6px;font-size:24px;color:#0f172a;}
+    h3{margin:0 0 14px;font-size:20px;color:#0f172a;}
+    .sub{color:#64748b;font-size:14px;margin:0 0 20px;}
+    .byline{color:#2563eb;font-size:15px;font-weight:600;letter-spacing:1px;margin:0 0 10px;}
+    .warn{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.6;margin:0 0 16px;}
+    .note{background:#f0f9ff;border:1px solid #bae6fd;color:#075985;border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.6;margin:0 0 16px;}
+    label{display:block;font-size:15px;margin:0 0 6px;color:#334155;}
+    input[type=text],input[type=number]{width:100%;padding:12px 14px;font-size:16px;border:1px solid #cbd5e1;border-radius:10px;margin-bottom:16px;background:#f8fafc;}
+    input:focus{outline:2px solid #93c5fd;background:#fff;}
+    button{padding:12px 22px;border:none;border-radius:10px;background:#2563eb;color:#fff;font-size:16px;cursor:pointer;font-weight:600;}
+    button:hover{background:#1d4ed8;}
+    button:disabled{background:#cbd5e1;cursor:not-allowed;}
+    .bar{display:flex;justify-content:space-between;align-items:center;font-size:14px;color:#64748b;margin:0 0 14px;}
+    .tag{background:#e0e7ff;color:#3730a3;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600;}
+    .qbox{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin:0 0 20px;}
+    .qtext{font-size:22px;line-height:1.7;color:#0f172a;}
+    .passage{font-size:20px;line-height:1.8;color:#334155;margin:0 0 12px;}
+    .ask{font-size:22px;color:#0f172a;font-weight:600;line-height:1.6;}
+    .opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .opt{display:flex;align-items:center;gap:10px;border:2px solid #e2e8f0;border-radius:12px;padding:16px 18px;font-size:22px;cursor:pointer;background:#fff;transition:.15s;}
+    .opt:hover{border-color:#93c5fd;background:#f8fbff;}
+    .opt.sel{border-color:#2563eb;background:#eff6ff;}
+    .opt .dot{width:18px;height:18px;border:2px solid #cbd5e1;border-radius:50%;flex:0 0 auto;}
+    .opt.sel .dot{border-color:#2563eb;background:#2563eb;box-shadow:inset 0 0 0 3px #fff;}
+    .actions{margin-top:22px;display:flex;gap:12px;align-items:center;}
+    .hint{font-size:14px;color:#dc2626;}
+    /* 记忆页 */
+    .memo-head{text-align:center;font-size:15px;color:#64748b;margin:0 0 14px;}
+    .count{font-size:46px;font-weight:700;color:#2563eb;text-align:center;line-height:1;}
+    .count span{font-size:16px;color:#94a3b8;font-weight:400;margin-left:6px;}
+    .cbar{height:10px;background:#e2e8f0;border-radius:999px;overflow:hidden;margin:16px 0 26px;}
+    .cbar i{display:block;height:100%;width:100%;background:#2563eb;transition:width .12s linear;}
+    .memo-list{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;margin:0 0 8px;}
+    .memo-item{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:12px;padding:16px 22px;font-size:30px;color:#0f172a;letter-spacing:2px;}
+    /* 报告 */
+    .report{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:12px;padding:20px;margin-bottom:20px;}
+    .report p{margin:6px 0;font-size:16px;line-height:1.7;}
+    .score{font-size:34px;font-weight:700;color:#047857;}
+    table{width:100%;border-collapse:collapse;font-size:15px;}
+    th,td{border-bottom:1px solid #e2e8f0;padding:10px 8px;text-align:left;}
+    th{background:#f8fafc;color:#475569;font-weight:600;}
+    td.num{text-align:center;width:90px;}
+    h3.sec{margin:26px 0 4px;font-size:18px;color:#0f172a;}
+    .adv{border-left:4px solid #cbd5e1;background:#f8fafc;border-radius:0 10px 10px 0;padding:12px 16px;margin:10px 0;}
+    .adv h4{margin:0 0 6px;font-size:16px;color:#0f172a;display:flex;align-items:center;flex-wrap:wrap;gap:8px;}
+    .adv p{margin:0;font-size:15px;line-height:1.75;color:#334155;}
+    .adv.good{border-left-color:#10b981;}
+    .adv.mid{border-left-color:#f59e0b;}
+    .adv.low{border-left-color:#ef4444;}
+    .band{font-size:13px;border-radius:999px;padding:3px 10px;font-weight:600;white-space:nowrap;}
+    .band.good{background:#d1fae5;color:#047857;}
+    .band.mid{background:#fef3c7;color:#b45309;}
+    .band.low{background:#fee2e2;color:#b91c1c;}
+    .foot{text-align:center;color:#94a3b8;font-size:12px;margin-top:18px;}
+    /* 打印 / 存 PDF：只保留报告内容 */
+    @media print{
+        body{background:#fff;padding:0;margin:0;}
+        .card{box-shadow:none;border-radius:0;padding:0;}
+        .actions{display:none;}
+        #r-foot{display:none;}
+        h3.sec{margin-top:16px;}
+        .report,.adv,table{break-inside:avoid;}
+    }
+    @media (max-width:560px){
+        .opts{grid-template-columns:1fr;}
+        .opt{font-size:20px;}
+        .memo-item{font-size:24px;padding:12px 16px;}
+        .card{padding:20px 16px;}
+        table{font-size:13px;}
+        th,td{padding:8px 4px;}
+        .adv h4{font-size:15px;}
+        .adv p{font-size:14px;}
+    }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+    <!-- 开始页 -->
+    <div id="page-start" class="card">
+        <h2>中文阅读困难风险筛查辅助工具</h2>
+        <p class="byline">闫庭睿的 iflab 作品</p>
+        <p class="sub">适用于 6~9 岁儿童（小学一至三年级）· 共 30 题 · 约 10 分钟</p>
+        <p class="warn">⚠️ 声明：本工具仅用于风险筛查预警，<b>不具备医学诊断效力</b>。筛查结果仅供参考，不能替代医院或专业机构的评估。</p>
+        <p class="note">所有作答与结果仅保存在本机浏览器，不会上传到任何服务器。</p>
+        <label>姓名（可匿名，也可只填编号）</label>
+        <input type="text" id="name" placeholder="例如：小明 / A01">
+        <label>年龄（岁）</label>
+        <input type="number" id="age" min="5" max="12" placeholder="例如：7">
+        <div class="actions">
+            <button onclick="startTest()">开始测试</button>
+            <span class="hint" id="start-hint"></span>
+        </div>
+        <p class="sub" style="margin-top:20px;line-height:1.9">
+            共 30 题，约 10 分钟：形近字辨别 10 题 · 字音匹配 8 题 · 短时阅读理解 6 题 · 短时记忆 6 题。<br>
+            其中短时记忆题会先显示 10 秒记忆材料，倒计时结束后自动跳到答题页。
+        </p>
+        <p class="sub">
+            <a href="javascript:void(0)" onclick="demoReport()" style="color:#2563eb;text-decoration:none;">▸ 演示模式：跳过答题，直接查看报告样例</a>
+        </p>
+    </div>
+
+    <!-- 记忆题材料页（与答题页分离） -->
+    <div id="page-memo" class="card hide">
+        <div class="bar">
+            <span id="memo-progress"></span>
+            <span class="tag" id="memo-tag">短时记忆测试</span>
+        </div>
+        <p class="memo-head">请记住下面的内容，看清后不要出声念</p>
+        <div class="count"><b id="memo-sec">10</b><span>秒</span></div>
+        <div class="cbar"><i id="memo-bar"></i></div>
+        <div class="memo-list" id="memo-list"></div>
+    </div>
+
+    <!-- 答题页 -->
+    <div id="page-question" class="card hide">
+        <div class="bar">
+            <span id="q-progress"></span>
+            <span class="tag" id="q-tag"></span>
+        </div>
+        <div class="qbox">
+            <div class="passage" id="q-passage"></div>
+            <div class="qtext" id="q-desc"></div>
+        </div>
+        <div class="opts" id="opt-box"></div>
+        <div class="actions">
+            <button onclick="submitAnswer()">提交答案</button>
+            <span class="hint" id="q-hint"></span>
+        </div>
+    </div>
+
+    <!-- 报告页 -->
+    <div id="page-report" class="card hide">
+        <h2>筛查报告</h2>
+        <p class="sub">受测者：<b id="r-name"></b>　年龄：<b id="r-age"></b>　用时：<b id="r-time"></b></p>
+        <div class="report">
+            <p>总得分：<span class="score" id="r-score">0</span> / <span id="r-full">30</span></p>
+            <p>风险等级：<b id="r-level"></b></p>
+            <p id="r-tip"></p>
+        </div>
+        <table>
+            <thead><tr><th>版块</th><th class="num">答对</th><th class="num">题数</th><th class="num">正确率</th><th>评价</th></tr></thead>
+            <tbody id="r-table"></tbody>
+        </table>
+        <h3 class="sec">分项建议</h3>
+        <div id="r-advice"></div>
+        <p class="foot" id="r-note"></p>
+        <div class="actions" style="margin-top:22px">
+            <button onclick="window.print()">打印 / 保存为 PDF</button>
+            <button onclick="resetAll()" style="background:#64748b">重新测试</button>
+        </div>
+        <p class="foot" id="r-foot">本结果仅为筛查参考，不作为诊断依据。工具版本 v2 · 2026 年 10 月</p>
+    </div>
+
+</div>
+
+<script>
+/* =========================================================================
+   题库数据
+   1) XJ   形近字辨别   题库 300 题，随机抽 10 题
+   2) ZY   字音匹配     题库 100 题，随机抽 8 题
+   3) YD   短时阅读理解 题库  50 题，随机抽 6 题
+   4) JY   短时记忆     题库  50 题，随机抽 6 题（每题先看 10 秒材料，再跳转答题）
+
+   每个版块的选项统一为「正确答案写在第 1 位」，运行时打乱，避免位置偏差。
+   ========================================================================= */
+
+/* ---- 1) 形近字：150 组形近字，每组生成 2 题（互为题干与正确项） → 300 题 */
+const XJ_PAIRS = `
+拔|拨
+折|拆
+抄|吵
+炒|抄
+拉|垃
+招|沼
+绍|招
+择|泽
+译|泽
+抱|泡
+跑|炮
+抱|饱
+挑|跳
+桃|逃
+跳|逃
+提|题
+拍|伯
+拍|怕
+怕|伯
+拾|给
+抬|治
+治|冶
+换|唤
+援|缓
+缓|暖
+暖|援
+搂|楼
+楼|数
+波|坡
+坡|破
+破|波
+洗|洒
+酒|洒
+洒|晒
+漂|飘
+湖|糊
+糊|蝴
+蝴|湖
+消|销
+销|削
+悄|梢
+梢|稍
+捎|稍
+汤|场
+场|扬
+扬|杨
+池|驰
+他|地
+地|池
+拖|施
+渐|惭
+渴|喝
+喝|揭
+揭|竭
+慢|漫
+馒|漫
+湿|温
+幕|慕
+墓|幕
+漠|摸
+模|摸
+塘|糖
+洋|样
+洁|结
+请|清
+情|晴
+晴|睛
+睛|精
+清|精
+请|情
+峰|锋
+蜂|峰
+蜂|锋
+澡|操
+燥|躁
+操|澡
+噪|燥
+噪|躁
+躁|操
+辨|辩
+辫|瓣
+辩|辨
+辫|辩
+瓣|辨
+已|己
+未|末
+天|夭
+千|干
+士|土
+人|入
+刀|力
+日|曰
+木|本
+王|玉
+乌|鸟
+戍|戌
+免|兔
+候|侯
+密|蜜
+钩|钓
+蓝|篮
+座|坐
+圆|园
+因|困
+棵|颗
+载|栽
+栽|裁
+使|便
+饿|鹅
+谈|淡
+试|拭
+检|脸
+玲|铃
+粒|拉
+境|镜
+优|忧
+浇|绕
+绕|烧
+狡|饺
+饺|较
+较|校
+陪|赔
+培|陪
+摇|遥
+遥|谣
+遍|编
+编|偏
+沙|纱
+蚂|吗
+妈|码
+玛|码
+材|财
+访|防
+房|防
+织|识
+识|帜
+静|净
+挣|睁
+何|河
+荷|何
+借|错
+蜡|借
+该|孩
+孩|核
+刻|该
+课|棵
+娟|绢
+植|值
+邀|激
+绣|诱
+`;
+
+/* 干扰项字符池：与上面所有形近字组的部件都不重叠，避免出现两个都“像”的情况 */
+const XJ_FILLERS = Array.from("雨云电弓田鱼雪风光书门家春冬夏东南大小多高长黄黑声飞走牛羊船伞甜平出头名亮男后生里万户爱");
+
+/* ---- 2) 字音匹配 ----
+   A 组·看字选音（60 题）：字|正确读音|干扰|干扰|干扰
+   B 组·选同音字（40 题）：字|同音字|干扰|干扰|干扰 */
+const ZY_A = `
+拔|bá|bō|pō|bèi
+晴|qíng|qǐng|jīng|qín
+情|qíng|qīng|jīng|qín
+睛|jīng|qíng|jǐng|jīn
+跳|tiào|táo|tiāo|diào
+桃|táo|tiào|tāo|dào
+逃|táo|tāo|tiào|dào
+峰|fēng|féng|fèng|fēn
+蜂|fēng|féng|fèng|bàng
+抱|bào|bāo|pào|bǎo
+泡|pào|bāo|báo|páo
+跑|pǎo|bào|pào|bāo
+炮|pào|bāo|pǎo|bào
+澡|zǎo|cǎo|zào|sǎo
+操|cāo|zào|cào|sāo
+燥|zào|cāo|sào|zǎo
+躁|zào|cāo|sào|cǎo
+辨|biàn|bàn|biǎn|piàn
+辩|biàn|biǎn|bàn|piàn
+辫|biàn|bàn|biān|piàn
+瓣|bàn|biàn|bān|pàn
+已|yǐ|jǐ|sì|yī
+己|jǐ|yǐ|sì|jī
+未|wèi|mò|wéi|měi
+末|mò|wèi|mù|mō
+天|tiān|yāo|tán|tiǎn
+夭|yāo|tiān|yào|ǎo
+千|qiān|gān|qián|jiān
+士|shì|tǔ|shí|sì
+土|tǔ|shì|dù|tù
+人|rén|rù|yín|lén
+入|rù|rén|yù|lù
+刀|dāo|lì|diāo|tāo
+力|lì|dāo|lí|nì
+日|rì|yuē|mù|rè
+曰|yuē|rì|yù|bái
+木|mù|běn|mò|mǔ
+本|běn|mù|bēn|pěn
+王|wáng|yù|wǎng|zhǔ
+玉|yù|wáng|yǔ|zhǔ
+乌|wū|niǎo|wù|yǔ
+鸟|niǎo|wū|niào|liǎo
+免|miǎn|tù|mián|wǎn
+兔|tù|miǎn|tǔ|dù
+候|hòu|hóu|hǒu|gòu
+侯|hóu|hòu|hǒu|gōu
+密|mì|mí|bì|mǐ
+蜜|mì|mǐ|bì|mí
+蓝|lán|lǎn|nán|làn
+篮|lán|lǎn|nán|làn
+座|zuò|zhuò|cuò|zòu
+坐|zuò|cuò|zhuò|zòu
+圆|yuán|yuàn|yán|wán
+园|yuán|yuàn|yán|wán
+饿|è|é|ě|wǒ
+鹅|é|è|ě|wǒ
+谈|tán|dàn|tǎn|dān
+淡|dàn|tán|dǎn|tǎn
+波|bō|pō|bó|bā
+织|zhī|zhǐ|zhí|chī
+`;
+
+const ZY_B = `
+八|巴|爸|拔|白
+木|目|母|马|米
+园|圆|远|院|完
+坐|座|错|昨|菜
+峰|蜂|饭|肥|方
+桃|逃|挑|跳|跑
+蓝|篮|懒|难|乱
+期|七|起|气|其
+谈|坛|淡|炭|但
+情|晴|请|清|青
+清|青|请|晴|静
+睛|精|晴|情|静
+蜂|峰|房|凤|飞
+抱|报|跑|泡|饱
+澡|早|草|造|操
+燥|躁|操|澡|草
+辨|辩|瓣|班|半
+土|吐|兔|图|度
+人|仁|认|入|银
+力|历|里|离|林
+免|勉|面|棉|米
+密|蜜|米|迷|谜
+座|坐|昨|错|最
+候|后|猴|吼|狗
+笔|比|鼻|闭|别
+书|输|树|数|熟
+声|生|星|深|身
+图|途|土|兔|突
+湖|胡|户|虎|喝
+洋|阳|养|样|药
+洁|结|街|借|接
+站|占|展|沾|真
+报|抱|跑|饱|包
+河|何|喝|火|黑
+题|提|梯|踢|体
+织|知|纸|直|找
+检|简|见|脸|连
+棵|颗|课|客|可
+借|界|接|街|解
+静|净|睛|京|星
+`;
+
+/* ---- 3) 短时阅读理解：短文|问题|正确|干扰|干扰|干扰 */
+const YD = `
+小猫在院子里追蝴蝶。|谁在追蝴蝶？|小猫|院子|蝴蝶|不知道
+小明早上七点起床，先刷牙再吃早饭。|小明起床后先做什么？|刷牙|吃早饭|上学|跑步
+妈妈把苹果放进冰箱里。|妈妈把什么放进了冰箱？|苹果|冰箱|香蕉|书包
+下雨了，小红撑起一把红色的雨伞。|小红的雨伞是什么颜色？|红色|蓝色|黄色|绿色
+弟弟有一只白色的小狗，它最喜欢玩球。|小狗最喜欢玩什么？|玩球|睡觉|喝水|看书
+爸爸骑着自行车去上班。|爸爸骑什么去上班？|自行车|汽车|飞机|火车
+奶奶在厨房里做面条，香味飘到了客厅。|香味从哪里飘到客厅？|厨房|院子|卧室|阳台
+冬天到了，树上的叶子掉光了。|树叶在哪个季节掉光？|冬天|春天|夏天|秋天
+小鸟在树上唱歌，小虫在草地上爬。|小鸟在哪里唱歌？|树上|草地|水里|屋顶
+小华把作业本放进书包，然后去学校。|小华把什么放进了书包？|作业本|铅笔|水杯|帽子
+太阳落山了，天慢慢黑了下来。|太阳落山后，天会怎样？|慢慢变黑|下雨|变亮|刮风
+妹妹喝牛奶的时候，不小心洒在桌上了。|妹妹把什么洒在桌上了？|牛奶|水|果汁|汤
+公园里有很多花，蜜蜂在花丛中飞来飞去。|蜜蜂在哪里飞？|花丛中|水里|树上|房子里
+哥哥的铅笔断了，他向同桌借了一支。|哥哥向谁借铅笔？|同桌|老师|妈妈|弟弟
+早上，小明背着书包坐公交车去上学。|小明坐什么去上学？|公交车|自行车|地铁|走路
+我把窗户关上了，因为外面风很大。|我为什么关窗户？|因为风很大|因为下雨|因为停电|因为太热
+小猫爬到树上，可是下不来了。|小猫爬到什么地方？|树上|屋顶|墙头|桌子
+妈妈买了一斤鸡蛋和两棵白菜。|妈妈买了几棵白菜？|两棵|一斤|一棵|三棵
+今天是爷爷的生日，我们一起吃了蛋糕。|今天是谁的生日？|爷爷|奶奶|爸爸|我
+小鸭子在水里游来游去，小鱼在旁边看着。|小鸭子在哪里游？|水里|岸边|草地|树上
+闹钟响了，小红赶紧穿好衣服。|小红听见闹钟后做什么？|穿衣服|吃饭|看书|睡觉
+图书馆里很安静，大家都在看书。|图书馆里为什么很安静？|因为大家都在看书|因为没有人|因为已经关门|因为下雨了
+小刚把画贴在墙上，画上有一只大象。|画上是什么动物？|大象|老虎|兔子|熊猫
+秋天的果园里，苹果红了，葡萄紫了。|什么水果变紫了？|葡萄|苹果|香蕉|西瓜
+奶奶戴着老花镜，慢慢地看报纸。|奶奶戴着什么看报纸？|老花镜|帽子|手套|围巾
+下课铃响了，同学们跑到操场上玩。|同学们跑到哪里玩？|操场|教室|图书馆|食堂
+夏天很热，我吃了两根冰棍。|我吃了几根冰棍？|两根|一根|三根|四根
+小鱼在水缸里游，小明每天给它换水。|小明每天给小鱼做什么？|换水|喂饭|洗澡|唱歌
+爸爸把伞送给门口的阿姨，因为外面在下雨。|爸爸为什么送伞？|因为在下雨|因为阿姨热|因为伞坏了|因为要出门
+桌子上放着三个杯子，一个是红色的。|桌子上有几个杯子？|三个|一个|两个|四个
+小兔子爱吃萝卜，也爱吃青菜。|小兔子爱吃什么？|萝卜和青菜|肉|鱼|米饭
+老师在黑板上写了一个大大的字。|老师在黑板上写了什么？|一个字|一幅画|一条线|一个圈
+我和爸爸去河边钓鱼，钓到了一条大鱼。|我们钓到了什么？|一条大鱼|一只虾|一只螃蟹|一只小乌龟
+清晨，公鸡一叫，村子里的人都起床了。|是谁把村里人叫醒的？|公鸡|小鸟|闹钟|小狗
+妹妹把玩具收进箱子里，房间变得很整齐。|妹妹把玩具收到了哪里？|箱子里|床底下|桌上|书包里
+春天来了，柳树长出了新的嫩芽。|柳树在哪个季节长出新芽？|春天|夏天|秋天|冬天
+医生给小明量了体温，还让他多喝水。|医生让小明做什么？|多喝水|多吃饭|多跑步|多睡觉
+小马跑得很快，小羊跑得慢一些。|谁跑得快？|小马|小羊|一样快|都不知道
+妈妈把衣服晾在阳台上，阳光晒得很暖。|妈妈把衣服晾在哪里？|阳台上|屋里|院子里|树上
+小朋友排队洗手，一个接着一个。|小朋友在做什么？|排队洗手|排队吃饭|排队回家|排队跑步
+外婆家在山上，我们坐车走了很久才到。|外婆家在哪里？|山上|河边|海边|城里
+小猫的眼睛在晚上会发亮。|小猫的眼睛什么时候会发亮？|晚上|早上|中午|下午
+小雨把妈妈给的钱放进了存钱罐。|小雨把钱放进了哪里？|存钱罐|书包|口袋|钱包
+冬天我戴着厚厚的帽子出门。|我戴帽子是因为什么？|天气冷|天气热|下雨了|刮风了
+老师表扬了小红的字写得很工整。|老师表扬小红什么？|字写得工整|跑得快|声音大|画得好
+果园里的叔叔把梯子靠在树上，摘下了很多果子。|叔叔用什么摘果子？|梯子|绳子|篮子|椅子
+小狗听见门铃响，马上跑到门口去。|小狗听见了什么声音？|门铃|电话|汽车|风声
+我把书从书架上拿下来，放在桌子上看。|我把书放在哪里看？|桌子上|书架上|床上|地上
+夜里下了一场大雨，早上路上的水坑还没干。|水坑为什么还没干？|因为夜里下了大雨|因为有人倒水|因为水管破了|因为有洒水车
+小云把风筝放得很高，线都要用完了。|小云在放什么？|风筝|气球|纸飞机|雨伞
+`;
+
+/* ---- 4) 短时记忆：记忆材料（用、分隔）|问题|正确|干扰|干扰|干扰 */
+const JY = `
+苹果、火车、桌子|下面哪个词刚才没有出现？|汽车|苹果|火车|桌子
+书包、铅笔、雨伞|下面哪个词刚才出现过？|铅笔|水杯|帽子|手套
+红色、蓝色、绿色|下面哪个颜色刚才没有出现？|黄色|红色|蓝色|绿色
+小猫、小狗、小兔|刚才第一个词是什么？|小猫|小狗|小兔|小鸟
+1、3、5、7|刚才一共出现了几个数字？|四个|三个|五个|六个
+苹果、香蕉、西瓜、葡萄|刚才第二个词是什么？|香蕉|苹果|西瓜|葡萄
+桌子、椅子、沙发|下面哪个词刚才没有出现？|床|桌子|椅子|沙发
+早、中、晚|刚才第三个字是什么？|晚|早|中|夜
+春天、夏天、秋天、冬天|刚才第四个词是什么？|冬天|春天|夏天|秋天
+3、6、9|刚才一共出现了几个数字？|三个|两个|四个|五个
+医生、老师、警察|下面哪个词语刚才没有出现？|司机|医生|老师|警察
+眼睛、耳朵、鼻子、嘴巴|刚才第三个词是什么？|鼻子|眼睛|耳朵|嘴巴
+米饭、面条、饺子、包子|下面哪个词刚才没有出现？|馒头|米饭|面条|饺子
+跑、跳、走|刚才第二个字是什么？|跳|跑|走|飞
+红色、黄色、蓝色|下面哪个颜色刚才出现了？|黄色|紫色|黑色|绿色
+2、4、6、8|刚才第一个数字是什么？|2|4|6|8
+苹果、梨、桃|下面哪个词刚才没有出现？|橘子|苹果|梨|桃
+爸爸、妈妈、哥哥、妹妹|刚才第四个词是什么？|妹妹|爸爸|妈妈|哥哥
+手、脚、头、肩|刚才第三个字是什么？|头|手|脚|肩
+汽车、火车、飞机|下面哪个词刚才没有出现？|轮船|汽车|火车|飞机
+牛奶、豆浆、果汁|刚才第一个词是什么？|牛奶|豆浆|果汁|咖啡
+5、10、15|刚才一共出现了几个数字？|三个|两个|四个|五个
+铅笔、橡皮、尺子、本子|下面哪个词刚才出现了？|橡皮|剪刀|胶水|书包
+花、草、树、叶|刚才第二个字是什么？|草|花|树|叶
+早上、中午、下午、晚上|刚才第一个词是什么？|早上|中午|下午|晚上
+猫、狗、鸟|下面哪个字刚才没有出现？|鱼|猫|狗|鸟
+1、2、3、4、5|刚才第四个数字是什么？|4|1|2|5
+桌子、椅子、柜子|下面哪个词刚才没有出现？|书架|桌子|椅子|柜子
+苹果、橘子、香蕉、桃、梨|刚才第五个词是什么？|梨|苹果|橘子|桃
+红、黄、蓝、绿|刚才第三个字是什么？|蓝|红|黄|绿
+医生、护士、病人|下面哪个词刚才没有出现？|老师|医生|护士|病人
+西瓜、葡萄、草莓|下面哪个词刚才出现了？|葡萄|芒果|菠萝|荔枝
+6、7、8|刚才第二个数字是什么？|7|6|8|9
+哥哥、弟弟、姐姐、妹妹|刚才第三个词是什么？|姐姐|哥哥|弟弟|妹妹
+铅笔、钢笔、毛笔|下面哪个词刚才没有出现？|粉笔|铅笔|钢笔|毛笔
+春、夏、秋、冬|刚才第二个字是什么？|夏|春|秋|冬
+书包、水杯、帽子|下面哪个词刚才出现了？|水杯|手套|围巾|雨鞋
+9、8、7、6|刚才第一个数字是什么？|9|8|7|6
+苹果、香蕉、橘子、葡萄|下面哪个词刚才没有出现？|西瓜|苹果|香蕉|橘子
+眼睛、鼻子、耳朵|刚才第一个词是什么？|眼睛|鼻子|耳朵|嘴巴
+白色、黑色、灰色|下面哪个颜色刚才没有出现？|红色|白色|黑色|灰色
+大米、小麦、玉米、豆子|刚才第四个词是什么？|豆子|大米|小麦|玉米
+笔、本、书、尺|刚才一共出现了几个字？|四个|三个|五个|六个
+桌子、台灯、闹钟、水杯|刚才第三个词是什么？|闹钟|桌子|台灯|水杯
+爸爸、妈妈、爷爷、奶奶|下面哪个词刚才没有出现？|姐姐|爸爸|妈妈|爷爷
+3、5、7、9|刚才第三个数字是什么？|7|3|5|9
+苹果、梨、橘子|下面哪个词刚才出现了？|橘子|西瓜|香蕉|草莓
+高、矮、胖、瘦|刚才第二个字是什么？|矮|高|胖|瘦
+医生、老师、司机、厨师|刚才第四个词是什么？|厨师|医生|老师|司机
+太阳、月亮、星星|下面哪个词刚才出现了？|月亮|云朵|彩虹|雨滴
+`;
+
+/* ========================= 组卷 ========================= */
+const MEMO_SECONDS = 10;   // 记忆页倒计时秒数
+
+const SECTIONS = [
+    {key:"xj", name:"形近字辨别", pick:10, hint:"选出字形最接近的一个"},
+    {key:"zy", name:"字音匹配",   pick:8,  hint:"注意声母、韵母和声调"},
+    {key:"yd", name:"短时阅读理解", pick:6, hint:"读句子，再回答问题"},
+    {key:"jy", name:"短时记忆测试", pick:6, hint:"先记住材料，再作答"}
+];
+
+const lines = txt => txt.trim().split("\n").map(l => l.trim().split("|"));
+const shuffle = arr => { for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];} return arr; };
+
+/* 形近字 300 题：150 组 × 2 个方向 */
+const XJ_BANK = (() => {
+    const pairs = lines(XJ_PAIRS);
+    const n = XJ_FILLERS.length;
+    const fillersFor = (i, dir, exclude) => {
+        const out = [];
+        let k = 0;
+        const base = (i * 3 + dir * 29) % n;
+        while(out.length < 3 && k < 400){
+            const c = XJ_FILLERS[(base + k * 17) % n];
+            if(exclude.indexOf(c) < 0 && out.indexOf(c) < 0) out.push(c);
+            k++;
+        }
+        return out;
+    };
+    const bank = [];
+    pairs.forEach((p, i) => {
+        const a = p[0], b = p[1];
+        bank.push({pair:i, target:a, desc:"选出和【" + a + "】字形最接近的字", answer:b, distractors:fillersFor(i,0,[a,b])});
+        bank.push({pair:i, target:b, desc:"选出和【" + b + "】字形最接近的字", answer:a, distractors:fillersFor(i,1,[a,b])});
+    });
+    return bank;
+})();
+
+/* 字音匹配 100 题 = 60 题看字选音 + 40 题选同音字 */
+const ZY_BANK = (() => {
+    const bank = [];
+    lines(ZY_A).forEach(r => bank.push({
+        desc:"【" + r[0] + "】的正确读音是？", answer:r[1], distractors:[r[2],r[3],r[4]]
+    }));
+    lines(ZY_B).forEach(r => bank.push({
+        desc:"下面哪个字和【" + r[0] + "】的读音相同？", answer:r[1], distractors:[r[2],r[3],r[4]]
+    }));
+    return bank;
+})();
+
+const YD_BANK = lines(YD).map(r => ({passage:r[0], desc:r[1], answer:r[2], distractors:[r[3],r[4],r[5]]}));
+const JY_BANK = lines(JY).map(r => ({material:r[0].split("、"), desc:r[1], answer:r[2], distractors:[r[3],r[4],r[5]]}));
+
+const BANK_SIZE = {xj:XJ_BANK.length, zy:ZY_BANK.length, yd:YD_BANK.length, jy:JY_BANK.length};
+
+/* ========================= 状态 ========================= */
+let state = {queue:[], idx:0, correct:0, detail:{}, startedAt:0, selected:null, countdown:null};
+
+/* 抽题：形近字同一组不重复抽、同一题干字不重复抽 */
+function drawSection(sec){
+    const all = {xj:XJ_BANK, zy:ZY_BANK, yd:YD_BANK, jy:JY_BANK}[sec.key];
+    const pool = shuffle(all.slice());
+    if(sec.key !== "xj") return pool.slice(0, sec.pick);
+    const picked = [], usedPair = {}, usedTarget = {};
+    for(const it of pool){
+        if(picked.length >= sec.pick) break;
+        if(usedPair[it.pair] || usedTarget[it.target]) continue;
+        picked.push(it); usedPair[it.pair] = 1; usedTarget[it.target] = 1;
+    }
+    return picked;
+}
+
+function buildQueue(){
+    state.queue = [];
+    SECTIONS.forEach(sec => {
+        drawSection(sec).forEach(item => {
+            state.queue.push(Object.assign({sec:sec.key, secName:sec.name}, item));
+        });
+    });
+}
+
+/* ========================= 流程 ========================= */
+function startTest(){
+    const age = document.getElementById("age").value;
+    if(!age){ document.getElementById("start-hint").innerText = "请先填写年龄"; return; }
+    document.getElementById("start-hint").innerText = "";
+    state.idx = 0; state.correct = 0; state.selected = null;
+    state.detail = {xj:{c:0,t:0}, zy:{c:0,t:0}, yd:{c:0,t:0}, jy:{c:0,t:0}};
+    state.startedAt = Date.now();
+    buildQueue();
+    document.getElementById("page-start").classList.add("hide");
+    nextQuestion();
+}
+
+function nextQuestion(){
+    if(state.idx >= state.queue.length){ showReport(); return; }
+    const item = state.queue[state.idx];
+    state.selected = null;
+    state.detail[item.sec].t++;
+    if(item.sec === "jy") showMemo(item);
+    else { document.getElementById("page-memo").classList.add("hide"); showQuestion(item); }
+}
+
+/* 记忆题：材料页 → 倒计时 10 秒 → 自动跳转答题页 */
+function showMemo(item){
+    document.getElementById("page-question").classList.add("hide");
+    const page = document.getElementById("page-memo");
+    page.classList.remove("hide");
+    document.getElementById("memo-progress").innerText = "第 " + (state.idx+1) + " / " + state.queue.length + " 题";
+    const list = document.getElementById("memo-list");
+    list.innerHTML = "";
+    item.material.forEach(m => {
+        const d = document.createElement("div");
+        d.className = "memo-item";
+        d.innerText = m;
+        list.appendChild(d);
+    });
+
+    const secEl = document.getElementById("memo-sec");
+    const barEl = document.getElementById("memo-bar");
+    secEl.innerText = MEMO_SECONDS;
+    barEl.style.width = "100%";
+    if(state.countdown) clearInterval(state.countdown);
+    const total = MEMO_SECONDS * 1000;
+    const endAt = Date.now() + total;          // 按真实时间计时，避免计时器漂移
+    state.countdown = setInterval(() => {
+        const remain = endAt - Date.now();
+        if(remain <= 0){
+            clearInterval(state.countdown);
+            state.countdown = null;
+            barEl.style.width = "0%";
+            secEl.innerText = "0";
+            page.classList.add("hide");      // 材料页隐藏，避免与答题页同时出现
+            list.innerHTML = "";             // 清空材料，确保两页相互独立
+            showQuestion(item);
+            return;
+        }
+        barEl.style.width = (remain / total * 100) + "%";
+        secEl.innerText = Math.ceil(remain / 1000);
+    }, 100);
+}
+
+function showQuestion(item){
+    document.getElementById("page-question").classList.remove("hide");
+    document.getElementById("q-progress").innerText = "第 " + (state.idx+1) + " / " + state.queue.length + " 题";
+    document.getElementById("q-tag").innerText = item.secName;
+    const passage = document.getElementById("q-passage");
+    passage.innerText = item.passage ? "句子：" + item.passage : "";
+    passage.classList.toggle("hide", !item.passage);
+    document.getElementById("q-desc").innerText = item.desc;
+    document.getElementById("q-hint").innerText = "";
+
+    const opts = shuffle([item.answer].concat(item.distractors));
+    const box = document.getElementById("opt-box");
+    box.innerHTML = "";
+    opts.forEach(text => {
+        const d = document.createElement("div");
+        d.className = "opt";
+        d.innerHTML = '<span class="dot"></span><span class="txt"></span>';
+        d.querySelector(".txt").innerText = text;
+        d.onclick = () => {
+            Array.from(box.children).forEach(c => c.classList.remove("sel"));
+            d.classList.add("sel");
+            state.selected = text;
+        };
+        box.appendChild(d);
+    });
+}
+
+function submitAnswer(){
+    const item = state.queue[state.idx];
+    if(state.selected === null){ document.getElementById("q-hint").innerText = "请先选择一个答案"; return; }
+    if(state.selected === item.answer){
+        state.correct++;
+        state.detail[item.sec].c++;
+    }
+    state.idx++;
+    nextQuestion();
+}
+
+/* ===================== 分项评价与建议 ===================== */
+const BAND_GOOD = "良好", BAND_MID = "需关注", BAND_LOW = "薄弱";
+const BAND_CLS = {"良好":"good", "需关注":"mid", "薄弱":"low"};
+
+/* 按版块正确率分三级：≥80% 良好，50%~79% 需关注，<50% 薄弱 */
+function bandOf(rate){
+    if(rate >= 0.8) return BAND_GOOD;
+    if(rate >= 0.5) return BAND_MID;
+    return BAND_LOW;
+}
+
+/* 每个版块 × 每个等级一条针对性建议（面向家长与老师，非医学表述） */
+const ADVICE = {
+    xj:{
+        "良好":"形近字辨认稳定，能区分部件相近的字。可以继续保持每天朗读与抄写，并逐步接触差别更小的形近字（如拔/拨、辨/辩）。",
+        "需关注":"形近字上偶有混淆。建议每天 5 分钟做形近字对比练习：抄写时边写边念出部件（例如“提手旁加一个发”），用彩笔标出不同的偏旁，把容易混的字做成卡片配对游戏。",
+        "薄弱":"形近字辨认明显吃力，容易把长得像的字混用。建议从偏旁归类入手，先按扌、氵、木、讠四类常用偏旁分类再记字；每次只学 3~5 个字，少量多次；写完作业后请孩子自己圈出形近字再检查一遍。"
+    },
+    zy:{
+        "良好":"字音与字形的对应比较稳定，声调辨别表现良好。可以继续用朗读和听写来巩固。",
+        "需关注":"个别声调或易混读音（平翘舌、前后鼻音）容易出错。建议把容易混的字按声调归类对比；每天做 5 分钟“听音选字”游戏；朗读时放慢速度，重点强调声调。",
+        "薄弱":"字音与字形的对应不够稳定，声调辨别比较吃力。建议先练四声对比（mā / má / mǎ / mà 卡片），再做“听音节选字”；借儿歌和绕口令辅助；朗读时用手指逐字指读，做到字字对应。"
+    },
+    yd:{
+        "良好":"能在短文中准确定位信息，理解表现良好。可以逐步加长句子，并尝试需要简单推理的提问。",
+        "需关注":"信息提取偶有遗漏，常见原因是读得较快、没有抓住关键信息。建议先看问题再读句子，边读边圈出关键词，读完后用一句话复述内容。",
+        "薄弱":"从短文中提取关键信息比较困难。建议把句子读两遍再作答；家长用“谁、在哪里、做什么”三类问题提问；从一句话的短文开始，答对后再逐步加长。"
+    },
+    jy:{
+        "良好":"短时记忆容量表现良好，能记住稍长的材料。可以尝试用分组和复述的方法记忆更长的内容。",
+        "需关注":"材料稍长就容易遗漏。建议用分组记忆，把 5 个词拆成“3 个 + 2 个”两组；记住后立刻在心里复述一遍，再看题目。",
+        "薄弱":"短时记忆容量偏小，可能影响听课跟读和多步骤指令的理解。建议一次只给 2~3 个信息；用图片卡片辅助；日常多练“复述”——说完一句话后请孩子重复一遍；同时保证充足睡眠。短时记忆偏低不等同于阅读困难，但它会影响朗读的连贯性与听课效率。"
+    }
+};
+
+function showReport(){
+    document.getElementById("page-question").classList.add("hide");
+    document.getElementById("page-memo").classList.add("hide");
+    document.getElementById("page-report").classList.remove("hide");
+
+    const full = state.queue.length;
+    const rate = state.correct / full;
+    document.getElementById("r-name").innerText = document.getElementById("name").value || "匿名";
+    document.getElementById("r-age").innerText = document.getElementById("age").value;
+    document.getElementById("r-score").innerText = state.correct;
+    document.getElementById("r-full").innerText = full;
+    const mins = Math.floor((Date.now() - state.startedAt) / 60000);
+    const secs = Math.floor((Date.now() - state.startedAt) % 60000 / 1000);
+    document.getElementById("r-time").innerText = mins + " 分 " + secs + " 秒";
+
+    /* 逐版块计算评价 */
+    const rows = SECTIONS.map(sec => {
+        const d = state.detail[sec.key];
+        const r = d.t ? d.c / d.t : 0;
+        const band = bandOf(r);
+        return {sec:sec, d:d, rate:r, band:band, cls:BAND_CLS[band], advice:ADVICE[sec.key][band]};
+    });
+    const low = rows.filter(x => x.band === BAND_LOW);
+    const mid = rows.filter(x => x.band === BAND_MID);
+
+    let level, tip;
+    if(rate <= 0.5 || low.length >= 2){
+        level = "🔴 高阅读困难风险";
+        tip = "总体表现较弱" + (low.length ? "，其中「" + low.map(x => x.sec.name).join("、") + "」明显偏弱" : "")
+            + "。建议家长与学校持续留意识字、朗读与阅读流畅性，并前往专业机构做进一步评估。本结果仅供参考。";
+    }else if(rate <= 0.8 || low.length === 1 || mid.length >= 2){
+        const names = low.concat(mid).map(x => x.sec.name);
+        level = "🟡 中等风险";
+        tip = names.length
+            ? "总体尚可，但「" + names.join("、") + "」需要关注。建议按下方分项建议做针对性练习，2~3 个月后复测一次，必要时咨询学校心理老师。"
+            : "总体正确率略低于同龄参考水平，建议按下方分项建议逐项巩固，2~3 个月后复测一次。";
+    }else{
+        level = "🟢 低风险";
+        tip = "各版块表现均在良好区间，暂未发现明显的阅读困难特征。建议保持每天 10~15 分钟的朗读习惯。";
+    }
+    document.getElementById("r-level").innerText = level;
+    document.getElementById("r-tip").innerText = tip;
+
+    const tbody = document.getElementById("r-table");
+    tbody.innerHTML = "";
+    rows.forEach(x => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = "<td>" + x.sec.name + "</td>"
+            + "<td class='num'>" + x.d.c + "</td>"
+            + "<td class='num'>" + x.d.t + "</td>"
+            + "<td class='num'>" + Math.round(x.rate * 100) + "%</td>"
+            + "<td><span class='band " + x.cls + "'>" + x.band + "</span></td>";
+        tbody.appendChild(tr);
+    });
+
+    const box = document.getElementById("r-advice");
+    box.innerHTML = "";
+    rows.forEach(x => {
+        const d = document.createElement("div");
+        d.className = "adv " + x.cls;
+        d.innerHTML = "<h4></h4><p></p>";
+        d.querySelector("h4").innerText = x.sec.name + "　" + x.band + "（答对 " + x.d.c + " / " + x.d.t + "）";
+        d.querySelector("p").innerText = x.advice;
+        box.appendChild(d);
+    });
+    document.getElementById("r-note").innerText =
+        "说明：各版块题量较少（6~10 题），单项结果不构成结论，只用于提示需要关注的方向；若多个版块同时偏弱，建议寻求专业评估。";
+}
+
+function resetAll(){
+    if(state.countdown){ clearInterval(state.countdown); state.countdown = null; }
+    document.getElementById("page-report").classList.add("hide");
+    document.getElementById("page-memo").classList.add("hide");
+    document.getElementById("page-question").classList.add("hide");
+    document.getElementById("page-start").classList.remove("hide");
+    document.getElementById("start-hint").innerText = "";
+}
+
+/* 演示模式：不做题，直接生成一份样例报告，方便老师快速查看输出效果 */
+function demoReport(){
+    if(state.countdown){ clearInterval(state.countdown); state.countdown = null; }
+    if(!document.getElementById("name").value) document.getElementById("name").value = "演示样例";
+    if(!document.getElementById("age").value) document.getElementById("age").value = "7";
+    state.queue = new Array(30);                 // 仅用于报告页显示总题数
+    state.startedAt = Date.now() - 8 * 60000 - 26000;
+    state.detail = {xj:{c:8,t:10}, zy:{c:6,t:8}, yd:{c:4,t:6}, jy:{c:2,t:6}};
+    state.correct = 20;
+    document.getElementById("page-start").classList.add("hide");
+    document.getElementById("page-memo").classList.add("hide");
+    document.getElementById("page-question").classList.add("hide");
+    showReport();
+}
+
+/* 自检：控制台会打印题库规模，便于核对 */
+console.log("题库规模：", BANK_SIZE, "合计", BANK_SIZE.xj + BANK_SIZE.zy + BANK_SIZE.yd + BANK_SIZE.jy);
+</script>
+</body>
+</html>
